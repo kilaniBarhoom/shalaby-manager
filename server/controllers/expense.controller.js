@@ -1,53 +1,19 @@
 import * as statusCodes from '../constants/status.constants.js';
-import * as queryHelper from "../helpers/queries/expense.queries.js";
-import ReqQueryHelper from "../helpers/reqQuery.helper.js";
 
-import Category from '../models/category.js';
 import Expense from '../models/expense.js';
 import { ExpenseSchema } from '../schemas/index.js';
 import ResponseError from '../utils/respErr.js';
 
 // create a new expense, edit a expense, delete a expense, get all expenses, get a single expense, delete a expense after 1 day
 export const getAllExpenses = async (req, res, next) => {
-    const { from, to, search, amount, pageNumber, pageSize, category } = ReqQueryHelper(req.query);
 
 
-    const allExpenses = await Expense.aggregate(queryHelper.findExpenses({ from, to, search, amount, category, loggedInUser: req.user, pageNumber, limit: 0 }))
-
-
-    const expenses = await Expense.aggregate(queryHelper.findExpenses({ from, to, search, amount, category, loggedInUser: req.user, pageNumber, limit: pageSize }));
-
-    const totalPages = Math.ceil(allExpenses.length / pageSize);
-
-    const _id = allExpenses.map(({ id }) => id);
-
-    let allTimeTotal = (await Expense.aggregate(queryHelper.findSumOfExpenses({ _id: null, loggedInUser: req.user })))[0];
-    const allTimeTotalValue = allTimeTotal ? allTimeTotal.total : 0;
-
-    let filteredTotal = (await Expense.aggregate(queryHelper.findSumOfExpenses({ _id: _id, loggedInUser: req.user })))[0];
-    const filteredTotalValue = filteredTotal ? filteredTotal.total : 0;
-
-    // let totalSumCategorizedAmounts = (await Expense.aggregate(queryHelper.findAnalyticsOfExpenses({ loggedInUser: req.user })))[0];
-
-
-    // const weekTotal = totalSumCategorizedAmounts ? totalSumCategorizedAmounts.weekTotal : 0;
-    // const monthTotal = totalSumCategorizedAmounts ? totalSumCategorizedAmounts.monthTotal : 0;
-    // const mostSpentInADay = totalSumCategorizedAmounts ? totalSumCategorizedAmounts.mostSpentInADay : 0;
-
+    const expenses = await Expense.find();
 
     return res.status(statusCodes.OK).json({
         success: true,
         data: {
             expenses,
-            allTimeTotalValue,
-            filteredTotalValue,
-            from: from ? from.toISOString().substring(0, 10) : "",
-            to: to ? to.toISOString().substring(0, 10) : "",
-            search,
-            category,
-            pageNumber,
-            pageSize,
-            totalPages,
             count: expenses.length,
         },
     });
@@ -66,22 +32,13 @@ export const createExpense = async (req, res, next) => {
             , statusCodes.BAD_REQUEST));
     }
 
-    const { date, name, description, amount, category } = req.body;
-
-    const fetchedCategory = await Category.findById(category);
-
-    if (!fetchedCategory) {
-        return next(new ResponseError('Category not found', statusCodes.NOT_FOUND));
-    }
-
+    const { date, name, description, amount } = req.body;
 
     await Expense.create({
         name,
         description,
         amount,
         date: new Date(date).setUTCHours(0, 0, 0, 0),
-        category,
-        user: req.user.id,
     });
     res.status(statusCodes.CREATED).json({
         status: 'success',
@@ -102,15 +59,7 @@ export const editExpense = async (req, res, next) => {
             , statusCodes.BAD_REQUEST));
     }
 
-    const { name, description, amount, date, category } = req.body
-
-    const fetchedCategory = await Category.findById(category);
-
-    if (!fetchedCategory) {
-        return next(new ResponseError('Category not found', statusCodes.NOT_FOUND));
-    }
-
-    const user = req.user.id;
+    const { name, description, amount, date } = req.body
 
     if (!isValidationError.success) {
         return next(new ResponseError(
@@ -124,8 +73,6 @@ export const editExpense = async (req, res, next) => {
         description,
         amount,
         date: new Date(date).setUTCHours(0, 0, 0, 0),
-        user,
-        category
     }, { new: true, runValidators: true, strict: false });
 
     if (!expense) {
@@ -148,7 +95,8 @@ export const deleteExpense = async (req, res, next) => {
 
 
 export const getSingleExpense = async (req, res, next) => {
-    const expense = await Expense.findById(req.params.expenseId).populate('user', 'fullNameEnglish fullNameArabic email role');
+    const expense = await Expense.findById(req.params.expenseId)
+
     if (!expense) {
         return next(new ResponseError('Expense not found', statusCodes.NOT_FOUND));
     }

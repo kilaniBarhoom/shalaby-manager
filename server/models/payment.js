@@ -10,22 +10,9 @@ const paymentSchema = new Schema({
         default: 0,
         required: [true, "Please provide an amount"],
     },
-    user: {
-        type: Schema.Types.ObjectId,
-        ref: 'User',
-    },
-    createdBy: {
-        type: Schema.Types.ObjectId,
-        ref: 'User',
-    },
     note: {
         type: String,
     },
-    type: {
-        type: String,
-        enum: ['advance', 'full'],
-        default: 'full',
-    }
 })
 
 

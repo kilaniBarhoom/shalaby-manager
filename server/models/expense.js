@@ -18,14 +18,6 @@ const expenseSchema = new Schema({
         type: Date,
         required: [true, 'Status must have a date'],
     },
-    user: {
-        type: Schema.Types.ObjectId,
-        ref: 'User',
-    },
-    category: {
-        type: Schema.Types.ObjectId,
-        ref: 'Category',
-    },
 
 }, { timestamps: true })
 
