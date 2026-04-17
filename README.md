@@ -1,3 +1,9 @@
+> [!WARNING]
+> **Service currently unavailable**
+> PennyPath is temporarily offline due to the ongoing MongoDB Atlas Middle East data center outage.
+> The live demo at [pennypath2.vercel.app](https://pennypath2.vercel.app) will not function until
+> the database service is restored. You can still run the project locally using your own MongoDB URI.
+> Apologies for the inconvenience.
 
 ## An Expense tracker app
 ```
